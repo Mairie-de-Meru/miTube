@@ -1,0 +1,81 @@
+name: Download
+
+# Déclenché par l'interface web (API workflow_dispatch). Le résultat est publié
+# en artefacts « metube-<job_id> » (fichiers) et « metube-<job_id>-meta » (résumé).
+run-name: "metube ${{ inputs.job_id }}"
+
+on:
+  workflow_dispatch:
+    inputs:
+      job_id:
+        description: "Identifiant de la demande (généré par l'interface)"
+        required: true
+        type: string
+      payload:
+        description: "Requête JSON (voir scripts/ytdl_opts.py)"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: metube-${{ inputs.job_id }}
+  cancel-in-progress: false
+
+jobs:
+  download:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # yt-dlp a besoin d'un runtime JavaScript pour YouTube.
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Installer ffmpeg
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
+
+      - name: Installer yt-dlp
+        env:
+          CHANNEL: ${{ vars.YTDLP_CHANNEL || 'stable' }}
+        run: |
+          if [ "$CHANNEL" = "nightly" ]; then
+            python -m pip install -q -U --pre "yt-dlp[default,curl-cffi]"
+          else
+            python -m pip install -q -U "yt-dlp[default,curl-cffi]"
+          fi
+          yt-dlp --version
+
+      - name: Télécharger
+        env:
+          PAYLOAD: ${{ inputs.payload }}
+          YTDL_OPTIONS: ${{ vars.YTDL_OPTIONS }}
+          YTDLP_COOKIES: ${{ secrets.YTDLP_COOKIES }}
+          OUT_DIR: ${{ github.workspace }}/out
+        run: python scripts/ytdl_run.py
+
+      - name: Publier les fichiers
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: metube-${{ inputs.job_id }}
+          path: out
+          if-no-files-found: ignore
+          compression-level: 0
+          retention-days: ${{ fromJSON(vars.RETENTION_DAYS || '7') }}
+
+      - name: Publier le résumé
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: metube-${{ inputs.job_id }}-meta
+          path: metube-result
+          if-no-files-found: ignore
+          retention-days: ${{ fromJSON(vars.RETENTION_DAYS || '7') }}

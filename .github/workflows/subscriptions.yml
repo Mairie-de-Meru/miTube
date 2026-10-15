@@ -1,0 +1,67 @@
+name: Subscriptions
+
+# Vérifie périodiquement les abonnements (chaînes / playlists) déclarés dans
+# data/subscriptions.json de la branche `metube-data`, puis lance « Download »
+# pour les nouveautés. Inactif tant que cette branche n'existe pas.
+on:
+  schedule:
+    - cron: "23 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write # pousse data/subscriptions.json (branche metube-data)
+  actions: write # lance le workflow Download
+
+concurrency:
+  group: metube-subscriptions
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: code
+      - name: Récupérer la branche de données
+        id: data
+        run: |
+          if git ls-remote --exit-code --heads "https://github.com/${GITHUB_REPOSITORY}.git" metube-data >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/checkout@v4
+        if: steps.data.outputs.exists == 'true'
+        with:
+          ref: metube-data
+          path: data-branch
+      - uses: actions/setup-python@v5
+        if: steps.data.outputs.exists == 'true'
+        with:
+          python-version: "3.12"
+      - uses: denoland/setup-deno@v2
+        if: steps.data.outputs.exists == 'true'
+        with:
+          deno-version: v2.x
+      - name: Installer yt-dlp
+        if: steps.data.outputs.exists == 'true'
+        run: python -m pip install -q -U "yt-dlp[default,curl-cffi]"
+      - name: Vérifier les abonnements
+        if: steps.data.outputs.exists == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          SUBS_FILE: ${{ github.workspace }}/data-branch/data/subscriptions.json
+          YTDL_OPTIONS: ${{ vars.YTDL_OPTIONS }}
+          YTDLP_COOKIES: ${{ secrets.YTDLP_COOKIES }}
+        run: python code/scripts/subscriptions_check.py
+      - name: Enregistrer l'état
+        if: steps.data.outputs.exists == 'true'
+        working-directory: data-branch
+        run: |
+          git config user.name "metube-pages[bot]"
+          git config user.email "metube-pages@users.noreply.github.com"
+          git add data/subscriptions.json
+          git diff --cached --quiet || { git commit -m "chore: mise à jour des abonnements"; git push; }
