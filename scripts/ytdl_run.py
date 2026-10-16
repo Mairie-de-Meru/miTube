@@ -90,7 +90,7 @@ def main() -> int:
             except Exception as exc:  # noqa: BLE001
                 failures += 1
                 traceback.print_exc()
-                result["items"].append({"url": url, "ok": False, "error": str(exc)[:500]})
+                result["items"].append({"url": url, "ok": False, "error": ytdl_opts.explain_error(str(exc))[:500]})
     finally:
         if cookie_path:
             os.remove(cookie_path)

@@ -154,3 +154,12 @@ class PublicModeTests(unittest.TestCase):
 
     def test_default_mode_keeps_all_hosts(self):
         self.assertEqual(req(noPlaylist=True)["noPlaylist"], False)
+
+
+class ExplainErrorTests(unittest.TestCase):
+    def test_bot_check_is_explained(self):
+        msg = "ERROR: [youtube] x: Sign in to confirm you\u2019re not a bot. Use --cookies"
+        self.assertEqual(y.explain_error(msg), y.BOT_CHECK_HINT)
+
+    def test_other_errors_unchanged(self):
+        self.assertEqual(y.explain_error("Video unavailable"), "Video unavailable")

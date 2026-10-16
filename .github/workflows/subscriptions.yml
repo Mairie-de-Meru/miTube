@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           path: code
       - name: Récupérer la branche de données
@@ -32,12 +32,12 @@ jobs:
           else
             echo "exists=false" >> "$GITHUB_OUTPUT"
           fi
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         if: steps.data.outputs.exists == 'true'
         with:
           ref: metube-data
           path: data-branch
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         if: steps.data.outputs.exists == 'true'
         with:
           python-version: "3.12"

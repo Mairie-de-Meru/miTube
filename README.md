@@ -40,7 +40,7 @@ Risques résiduels, sans embellir :
 
 ## Limites
 
-- **YouTube peut bloquer les serveurs GitHub** (IP de datacenter). Test réel du 15/10/2026 (yt-dlp 2026.08.19, sans cookies) : OK. Si l'erreur « Sign in to confirm you're not a bot » apparaît, ajoute des **cookies** (secret `YTDLP_COOKIES`, voir plus bas).
+- **YouTube bloque une partie des vidéos depuis les serveurs GitHub** (IP de datacenter). Test du 15/10/2026 : OK. Test du 16/10/2026 sur ce dépôt : une vidéo très populaire passe, deux autres sont refusées (« Sign in to confirm you're not a bot ») avec dix clients YouTube différents et même avec un fournisseur de PO token. La seule parade fiable est d'ajouter des **cookies** (secret `YTDLP_COOKIES`, voir plus bas) ou d'utiliser un runner auto-hébergé sur une connexion résidentielle.
 - **Conditions d'utilisation** : celles d'Actions réservent le service aux projets logiciels ; télécharger des médias est une zone grise. Usage modéré et à tes risques. Respecte les conditions de YouTube et le droit d'auteur.
 - **Pas de progression en pourcentage** : GitHub ne donne que l'état (en attente / en cours / terminé).
 - **Fichiers temporaires** : ce sont des artefacts (zip) conservés quelques jours, pas un dossier permanent.
