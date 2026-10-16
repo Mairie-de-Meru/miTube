@@ -1,18 +1,10 @@
 import { DEFAULT_FORM, type DownloadForm } from './payload'
 import type { LocalJob } from './jobs'
-import { normalizeWorkerUrl } from './direct'
 
 export type Theme = 'auto' | 'light' | 'dark'
 export type Lang = 'en' | 'fr'
-export type Mode = 'direct' | 'actions'
-
-/** URL du Worker injectée au build (variable de dépôt WORKER_URL), modifiable dans les Réglages. */
-export const BUILD_WORKER_URL = normalizeWorkerUrl(import.meta.env?.VITE_WORKER_URL ?? '')
 
 export interface Settings {
-  /** actions (défaut) : yt-dlp dans GitHub Actions ; direct : via le Worker, seulement si workerUrl est renseignée. */
-  mode: Mode
-  workerUrl: string
   repo: string
   theme: Theme
   lang: Lang
@@ -30,8 +22,6 @@ const { urls: _urls, ...DEFAULT_DEFAULTS } = DEFAULT_FORM
 void _urls
 
 export const DEFAULT_SETTINGS: Settings = {
-  mode: 'actions',
-  workerUrl: BUILD_WORKER_URL,
   repo: '',
   theme: 'auto',
   lang: 'en',
@@ -67,8 +57,6 @@ export function loadSettings(): Settings {
     ...DEFAULT_SETTINGS,
     ...saved,
     lang: saved.lang ?? detectLang(),
-    workerUrl: normalizeWorkerUrl(saved.workerUrl ?? '') || BUILD_WORKER_URL,
-    mode: saved.mode === 'direct' ? 'direct' : 'actions',
     defaults: { ...DEFAULT_SETTINGS.defaults, ...saved.defaults },
   }
 }

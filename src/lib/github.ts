@@ -48,8 +48,8 @@ export function detectRepo(loc: Pick<Location, 'hostname' | 'pathname'>): string
 /** Page de création d'un jeton à granularité fine, préremplie (nom, propriétaire, durée, permission Actions). */
 export function tokenUrl(owner: string): string {
   const q = new URLSearchParams({
-    name: 'MeTube Pages',
-    description: 'Lance et lit les téléchargements MeTube Pages (GitHub Actions)',
+    name: 'miTube',
+    description: 'Lance et lit les téléchargements miTube (GitHub Actions)',
     expires_in: '365',
     actions: 'write',
   })

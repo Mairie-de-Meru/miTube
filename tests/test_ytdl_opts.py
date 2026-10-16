@@ -91,3 +91,66 @@ class OptsTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def pub(**kw):
+    base = {"v": 1, "jobId": "abcd1234", "urls": ["https://www.youtube.com/watch?v=dQw4w9WgXcQ"]}
+    base.update(kw)
+    return y.normalize(base, public=True)
+
+
+class PublicModeTests(unittest.TestCase):
+    def test_accepts_youtube_hosts(self):
+        for u in (
+            "https://www.youtube.com/watch?v=x",
+            "https://youtu.be/x",
+            "https://m.youtube.com/watch?v=x",
+            "https://music.youtube.com/watch?v=x",
+        ):
+            self.assertEqual(pub(urls=[u])["urls"], [u])
+
+    def test_rejects_other_hosts_and_tricks(self):
+        for u in (
+            "https://example.com/v",
+            "http://www.youtube.com/watch?v=x",
+            "https://youtube.com.evil.example/watch?v=x",
+            "https://evil.example/?u=https://www.youtube.com/watch?v=x",
+            "https://user@www.youtube.com/watch?v=x",
+            "https://www.youtube.com.evil.example/",
+        ):
+            with self.assertRaises(y.InvalidRequest, msg=u):
+                pub(urls=[u])
+
+    def test_url_count_capped(self):
+        with self.assertRaises(y.InvalidRequest):
+            pub(urls=["https://youtu.be/x"] * 6)
+
+    def test_only_video_and_audio(self):
+        for t in ("captions", "thumbnail"):
+            with self.assertRaises(y.InvalidRequest):
+                pub(type=t)
+        self.assertEqual(pub(type="audio", format="mp3")["format"], "mp3")
+
+    def test_free_options_are_ignored(self):
+        r = pub(
+            ytdlOptions={"exec": "curl evil", "postprocessors": [{"key": "Exec"}]},
+            outputTemplate="../../x",
+            playlistLimit=9999,
+            splitChapters=True,
+        )
+        self.assertEqual(r["ytdlOptions"], {})
+        self.assertEqual(r["outputTemplate"], "")
+        self.assertEqual(r["playlistLimit"], 0)
+        self.assertFalse(r["splitChapters"])
+        opts = y.get_opts(r, {})
+        self.assertTrue(opts["noplaylist"])
+        self.assertNotIn("exec", opts)
+        self.assertEqual([p["key"] for p in opts["postprocessors"]], [])
+
+    def test_mp3_conversion(self):
+        opts = y.get_opts(pub(type="audio", format="mp3", quality="192"), {})
+        self.assertEqual(opts["postprocessors"][0]["preferredcodec"], "mp3")
+        self.assertEqual(opts["postprocessors"][0]["preferredquality"], "192")
+
+    def test_default_mode_keeps_all_hosts(self):
+        self.assertEqual(req(noPlaylist=True)["noPlaylist"], False)

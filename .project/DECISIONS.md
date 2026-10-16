@@ -49,3 +49,9 @@
 **Décision.** GitHub Actions redevient le mode par défaut. Le jeton ne peut pas être supprimé (aucun moyen de lancer un workflow depuis une page statique sans authentification, et le flux OAuth de GitHub n'est pas utilisable sans serveur) : on réduit l'effort à une saisie unique, avec lien de création prérempli et accueil en un écran. Le mode direct reste dans le code, masqué sans adresse de Worker.
 
 **Conséquences.** Le Worker déployé n'est plus utile pour YouTube ; il peut être supprimé du compte Cloudflare. Le transfert du dépôt vers Mairie-de-Meru change l'URL de Pages et l'origine autorisée du Worker.
+
+## 2026-10-16 — miTube : dépôt de l'organisation, jeton public à droits minimaux, suppression du Worker
+
+- **Contexte** : l'utilisateur final ne doit saisir aucun jeton ; l'administrateur (Gildas) peut le fournir, avec le moins de droits possible. Le mode direct (Worker Cloudflare) est inutilisable pour YouTube (IP Cloudflare bloquées).
+- **Décision** : nouveau dépôt public `Mairie-de-Meru/miTube` (nom sans « -pages ») ; Worker supprimé (code et déploiement) ; jeton fin « Actions : Read and write » sur ce seul dépôt, stocké en secret `PUBLIC_TOKEN` et injecté au build (`VITE_PUBLIC_TOKEN`). Il est lisible dans le site publié : il ne doit jamais avoir d'autre droit (ni Contents, ni Secrets). Interface réduite à lien + format (MP4 plusieurs qualités, MP3, M4A). L'ancien dépôt `appweb514-svg/metube-pages` n'est plus la référence.
+- **Conséquences** : la validation se fait obligatoirement côté Actions (mode public strict par défaut, `PUBLIC_MODE=0` pour l'administrateur). Renouvellement annuel du jeton. Artefacts lisibles de tout compte GitHub (dépôt public) : pas de contenu privé. Abonnements indisponibles en mode public (ils exigent Contents:write).

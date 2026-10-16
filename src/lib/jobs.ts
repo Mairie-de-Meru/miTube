@@ -56,6 +56,8 @@ export function buildJobs(
   local: LocalJob[],
   metas: Record<string, ResultMeta> = {},
   now: number = Date.now(),
+  /** Mode public : le dépôt est partagé, n'afficher que les téléchargements lancés depuis ce navigateur. */
+  onlyLocal = false,
 ): Job[] {
   const byName = new Map(artifacts.map((a) => [a.name, a]))
   const localById = new Map(local.map((l) => [l.jobId, l]))
@@ -63,7 +65,7 @@ export function buildJobs(
 
   for (const run of runs) {
     const id = jobIdOfRun(run)
-    if (!id) continue
+    if (!id || (onlyLocal && !localById.has(id))) continue
     const artifact = byName.get(`metube-${id}`)
     const l = localById.get(id)
     const meta = metas[id]

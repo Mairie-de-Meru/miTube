@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { GitHubClient, detectRepo, parseRepo, tokenUrl } from '../lib/github'
 import { parsePresets, stringifyPresets, type FormValues } from '../lib/form'
-import { normalizeWorkerUrl } from '../lib/direct'
 import { clearAllLocalData, type Settings, type StoredToken } from '../lib/settings'
 import { useT } from '../i18n'
 import { OptionFields } from './OptionFields'
@@ -15,7 +14,6 @@ export function SettingsDialog(p: {
 }) {
   const t = useT()
   const ref = useRef<HTMLDialogElement>(null)
-  const [worker, setWorker] = useState(p.settings.workerUrl)
   const [repo, setRepo] = useState(p.settings.repo || detectRepo(location))
   const [token, setToken] = useState(p.token.token)
   const [remember, setRemember] = useState(p.token.remember)
@@ -48,8 +46,6 @@ export function SettingsDialog(p: {
   }
 
   const save = () => {
-    const w = worker.trim() ? normalizeWorkerUrl(worker) : ''
-    if (worker.trim() && !w) return setMsg({ ok: false, text: t('err.worker') })
     const r = repo.trim() ? parseRepo(repo) : null
     if (repo.trim() && !r) return setMsg({ ok: false, text: t('err.repo') })
     let parsed
@@ -59,7 +55,7 @@ export function SettingsDialog(p: {
       return setMsg({ ok: false, text: e instanceof Error ? e.message : String(e) })
     }
     p.onSave(
-      { ...p.settings, workerUrl: w, repo: r ? `${r.owner}/${r.repo}` : '', defaults, presets: parsed },
+      { ...p.settings, repo: r ? `${r.owner}/${r.repo}` : '', defaults, presets: parsed },
       { token: token.trim(), remember },
     )
   }
@@ -84,15 +80,6 @@ export function SettingsDialog(p: {
           <button type="button" className="btn-close" aria-label={t('close')} onClick={() => ref.current?.close()}>×</button>
         </div>
         {p.notice && <div className="alert alert-warning" role="alert">{p.notice}</div>}
-
-        <fieldset>
-          <legend>{t('set.direct')}</legend>
-          <div className="field">
-            <label htmlFor="set-worker">{t('set.worker')}</label>
-            <input id="set-worker" className="control" value={worker} placeholder="https://metube-pages-proxy.example.workers.dev" spellCheck={false} autoCapitalize="off" onChange={(e) => setWorker(e.target.value)} />
-            <small className="hint">{t('set.worker.hint')}</small>
-          </div>
-        </fieldset>
 
         <fieldset>
           <legend>{t('set.github')}</legend>
