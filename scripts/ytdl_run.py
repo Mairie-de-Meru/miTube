@@ -4,6 +4,7 @@ Entrées (variables d'environnement) :
   PAYLOAD          JSON de la requête (voir ytdl_opts.normalize)
   YTDL_OPTIONS     JSON d'options yt-dlp globales (variable de dépôt, facultatif)
   YTDLP_COOKIES    contenu cookies.txt Netscape (secret de dépôt, facultatif)
+  YTDLP_PROXY      proxy de sortie (http/https/socks5…, secret de dépôt, facultatif) : fait sortir yt-dlp par une autre IP
   OUT_DIR          dossier de sortie (défaut : out)
   PUBLIC_MODE      « 0 » pour lever les restrictions du mode public (défaut : actif)
   INVIDIOUS_INSTANCES  instances Invidious du repli, séparées par espaces/virgules (défaut : liste intégrée)
@@ -76,6 +77,13 @@ def main() -> int:
         with os.fdopen(fd, "w") as fh:
             fh.write(cookies)
 
+    try:
+        proxy = ytdl_opts.proxy_from_env(os.environ.get("YTDLP_PROXY"))
+    except ytdl_opts.InvalidRequest as exc:
+        result["error"] = str(exc)
+        print(result["error"], file=sys.stderr)
+        return finish(2)
+
     failures = 0
     try:
         for url in req["urls"]:
@@ -85,6 +93,8 @@ def main() -> int:
                 opts["match_filter"] = yt_dlp.utils.match_filter_func(opts["match_filter"])
             if cookie_path:
                 opts["cookiefile"] = cookie_path
+            if proxy:
+                opts["proxy"] = proxy
             try:
                 # 1) métadonnées seules, pour savoir si c'est une playlist
                 probe_opts = {**opts, "skip_download": True, "extract_flat": "in_playlist", "postprocessors": []}

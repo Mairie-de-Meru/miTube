@@ -60,3 +60,8 @@
 - **Contexte** : les IP des runners GitHub sont refusées par YouTube pour certaines vidéos. Gildas refuse les cookies et le runner auto-hébergé et demande de passer par Invidious.
 - **Décision** : en cas d'échec yt-dlp (message anti-bot), `ytdl_run.py` tente `invidious.run_fallback` : API JSON d'une instance, repli sur plusieurs instances, flux choisis (MP4 h264+AAC, audio, MP3/M4A via ffmpeg), 3 h / 2 GiB en public. Instances via `INVIDIOUS_INSTANCES`, champ admin du formulaire (`payload.invidiousInstances`, ignoré en mode public), coupure par `INVIDIOUS_FALLBACK=0`.
 - **Conséquences** : test réel sur runner, vidéo bloquée : l'API répond mais le flux direct est refusé (403) ; les URL proxifiées sont derrière Anubis (non contourné). Le repli est donc best-effort et ne remplace pas `YTDLP_COOKIES`. 4 instances officielles sur 5 ont l'API désactivée.
+
+## 2026-10-16 — Sortie par proxy plutôt que contournement du blocage anti-bot
+- **Contexte** : Invidious ne suffit pas ; Gildas veut une solution hors cookie. Tests sur runner : clients yt-dlp (10 sur 2 vidéos), Piped (15 hôtes), Cobalt (auth requise) : tous échouent ; les URL de flux d'un navigateur sont liées à son IP.
+- **Décision** : le blocage est lié à l'IP du datacenter. Ajout du secret facultatif `YTDLP_PROXY` (validé par `ytdl_opts.proxy_from_env`, appliqué à yt-dlp dans `ytdl_run.py` et `subscriptions_check.py`). Pas de contournement par Tor/proxys publics.
+- **Conséquences** : la seule voie sans cookie est une IP de sortie propre fournie par l'utilisateur (proxy résidentiel, Tailscale/WireGuard à ajouter) ; non vérifiable sans ce proxy.

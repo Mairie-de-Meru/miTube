@@ -56,6 +56,7 @@ jobs:
           SUBS_FILE: ${{ github.workspace }}/data-branch/data/subscriptions.json
           YTDL_OPTIONS: ${{ vars.YTDL_OPTIONS }}
           YTDLP_COOKIES: ${{ secrets.YTDLP_COOKIES }}
+          YTDLP_PROXY: ${{ secrets.YTDLP_PROXY }}
         run: python code/scripts/subscriptions_check.py
       - name: Enregistrer l'état
         if: steps.data.outputs.exists == 'true'
