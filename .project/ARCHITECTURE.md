@@ -21,3 +21,5 @@ GitHub Actions (subscriptions.yml, cron 6 h) : data/subscriptions.json (branche 
 Build avec `VITE_PUBLIC_TOKEN` (secret `PUBLIC_TOKEN`, droits : Actions du seul dépôt) → `IS_PUBLIC` : jeton embarqué, dépôt déduit de l'URL github.io, `SimpleForm` (lien YouTube + format MP4/MP3/M4A), pas de réglages ni d'abonnements, liste limitée aux téléchargements lancés depuis ce navigateur (`buildJobs(..., onlyLocal)`). Sans jeton embarqué : mode administrateur (accueil + interface complète).
 
 Le jeton étant public, la validation décisive est côté Actions : `ytdl_opts.normalize(payload, public=True)` (variable `PUBLIC_MODE`, actif par défaut) n'accepte que des liens `https` YouTube (5 max), vidéo/audio, ignore `ytdlOptions`/`outputTemplate`/playlist/chapitres, et `get_opts` ajoute `noplaylist`, `max_filesize` 2 Go et un filtre de métadonnées (hors direct, ≤ 3 h).
+
+Repli Invidious : `scripts/invidious.py` (API `/api/v1/videos/<id>`, plusieurs instances, ffmpeg) appelé par `ytdl_run.py` quand yt-dlp échoue sur le contrôle anti-bot ; instances via `INVIDIOUS_INSTANCES` ou `payload.invidiousInstances` (admin seulement).

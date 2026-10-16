@@ -103,6 +103,18 @@ export function AddForm(p: {
               </div>
             </div>
             <div className="field">
+              <label htmlFor="adv-invidious">{t('adv.invidious')}</label>
+              <input
+                id="adv-invidious"
+                className="control"
+                value={form.invidiousInstances}
+                placeholder="https://invidious.f5.si"
+                spellCheck={false}
+                onChange={(e) => patch({ invidiousInstances: e.target.value })}
+              />
+              <p className="hint">{t('adv.invidiousHint')}</p>
+            </div>
+            <div className="field">
               <label htmlFor="adv-json">{t('adv.overrides')}</label>
               <textarea
                 id="adv-json"

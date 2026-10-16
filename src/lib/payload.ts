@@ -16,6 +16,8 @@ export interface DownloadForm {
   /** Surcharges yt-dlp, JSON (équivalent des « overrides » de MeTube). */
   ytdlOptions: string
   preset: string
+  /** Instances Invidious (une par ligne ou séparées par des virgules), repli si YouTube bloque yt-dlp. */
+  invidiousInstances: string
 }
 
 export const DEFAULT_FORM: DownloadForm = {
@@ -32,6 +34,7 @@ export const DEFAULT_FORM: DownloadForm = {
   outputTemplate: '',
   ytdlOptions: '',
   preset: '',
+  invidiousInstances: '',
 }
 
 /** Requête envoyée au workflow (version 1, validée côté Python par ytdl_opts.normalize). */
@@ -50,6 +53,7 @@ export interface Payload {
   splitChapters: boolean
   outputTemplate: string
   ytdlOptions: Record<string, unknown>
+  invidiousInstances?: string[]
 }
 
 export class FormError extends Error {}
@@ -106,6 +110,14 @@ export function buildPayload(
   }
   const limit = Math.trunc(Number(form.playlistLimit) || 0)
   if (limit < 0 || limit > 10000) throw new FormError('Items limit out of range')
+  const instances = parseUrls(form.invidiousInstances)
+  for (const u of instances) {
+    try {
+      if (new URL(u).protocol !== 'https:') throw new Error()
+    } catch {
+      throw new FormError(`Invalid Invidious instance (https required): ${u.slice(0, 80)}`)
+    }
+  }
   const preset = form.preset ? (presets[form.preset] ?? {}) : {}
   return {
     v: 1,
@@ -122,5 +134,6 @@ export function buildPayload(
     splitChapters: form.splitChapters,
     outputTemplate: form.outputTemplate.trim(),
     ytdlOptions: { ...preset, ...parseYtdlOptions(form.ytdlOptions) },
+    ...(instances.length ? { invidiousInstances: instances } : {}),
   }
 }

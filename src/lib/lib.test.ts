@@ -38,6 +38,13 @@ describe('payload', () => {
     expect(() => buildPayload({ ...DEFAULT_FORM, urls: 'https://a.io/v', ytdlOptions: '{' })).toThrow(FormError)
     expect(() => buildPayload({ ...DEFAULT_FORM, urls: 'https://a.io/v', ytdlOptions: '[1]' })).toThrow(FormError)
   })
+
+  it('transmet les instances Invidious et refuse le http', () => {
+    const p = buildPayload({ ...DEFAULT_FORM, urls: 'https://a.io/v', invidiousInstances: 'https://inv.one, https://inv.two' })
+    expect(p.invidiousInstances).toEqual(['https://inv.one', 'https://inv.two'])
+    expect(buildPayload({ ...DEFAULT_FORM, urls: 'https://a.io/v' }).invidiousInstances).toBeUndefined()
+    expect(() => buildPayload({ ...DEFAULT_FORM, urls: 'https://a.io/v', invidiousInstances: 'http://x.io' })).toThrow(FormError)
+  })
 })
 
 describe('github', () => {

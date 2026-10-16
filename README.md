@@ -57,6 +57,8 @@ Risques résiduels, sans embellir :
 | `PUBLIC_MODE` | `0` désactive les restrictions publiques (autres sites, playlists, options libres) côté Actions | actif |
 | `BASE_PATH` | Chemin de base du site, cas particulier | relatif |
 
+**Repli Invidious (expérimental, sans cookie)** : si yt-dlp est refusé par YouTube, le script interroge l'API d'une instance Invidious (`/api/v1/videos/<id>`), choisit le flux demandé, le télécharge et l'assemble avec ffmpeg. Instances configurables par la variable de dépôt `INVIDIOUS_INSTANCES` (URL https séparées par des espaces ou virgules, essayées dans l'ordre), par le champ « Instances Invidious » du formulaire avancé (mode admin seulement ; ignoré en mode public) ou désactivable avec `INVIDIOUS_FALLBACK=0`. **Limites mesurées le 16/10/2026** : sur les cinq instances officielles, quatre ont l'API désactivée ; la seule qui répond (`invidious.f5.si`) est instable (réponse non JSON une fois sur deux) ; ses URL de flux liées à son IP sont refusées (HTTP 403) depuis le runner GitHub pour la vidéo bloquée, alors qu'une vidéo non bloquée passe ; ses URL proxifiées sont derrière Anubis (anti-bot), non contourné volontairement. Ce repli ne débloque donc pas de façon fiable les vidéos refusées ; seuls les cookies ou un runner auto-hébergé le font.
+
 **Cookies (facultatif)** : exporte tes cookies au format Netscape depuis un compte secondaire (extension « Get cookies.txt LOCALLY »), puis crée le secret `YTDLP_COOKIES` avec le contenu du fichier. Ils ne passent jamais par le site ni par les artefacts.
 
 ### Mode administrateur (interface complète)
