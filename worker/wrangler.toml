@@ -8,3 +8,11 @@ workers_dev = true
 [vars]
 # Origine(s) du site autorisée(s), séparées par des virgules. Sans slash final.
 ALLOWED_ORIGINS = "https://appweb514-svg.github.io"
+
+# Limite de débit par IP (200 requêtes / minute). Une vidéo en consomme une quinzaine.
+[[ratelimits]]
+name = "LIMITER"
+namespace_id = "1001"
+  [ratelimits.simple]
+  limit = 200
+  period = 60

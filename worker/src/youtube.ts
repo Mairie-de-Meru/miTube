@@ -36,7 +36,14 @@ export function isAllowedStreamUrl(raw: string): boolean {
   } catch {
     return false
   }
-  return url.protocol === 'https:' && !url.port && !url.username && /^[a-z0-9-]+(\.[a-z0-9-]+)*\.googlevideo\.com$/i.test(url.hostname)
+  return (
+    url.protocol === 'https:' &&
+    !url.port &&
+    !url.username &&
+    !url.password &&
+    url.pathname === '/videoplayback' &&
+    /^[a-z0-9-]+(\.[a-z0-9-]+)*\.googlevideo\.com$/i.test(url.hostname)
+  )
 }
 
 interface RawFormat {

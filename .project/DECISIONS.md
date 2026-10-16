@@ -33,3 +33,11 @@
 **Alternatives écartées.** Extension navigateur (plus un simple site), Cobalt (dépend d'un tiers), Invidious (écarté plus tôt : anti-bot sur le proxy média).
 
 **Conséquences.** Dépend d'un compte Cloudflare et d'une API YouTube non officielle (peut casser sans préavis). Risque principal non testé : YouTube peut refuser les IP de datacenter de Cloudflare (« confirm you're not a bot »), et les URL googlevideo liées à l'IP peuvent échouer si l'IP de sortie du Worker change entre `/info` et `/stream`. Le code reste valable dans les deux cas ; le repli est le mode Actions.
+
+## 2026-10-16 — Durcissement du Worker public
+
+**Contexte.** Le Worker est utilisé par tous les visiteurs du site : il ne doit offrir aucune prise à un détournement ni à l'accès au compte Cloudflare.
+
+**Décision.** Le Worker n'a ni secret, ni KV/D1/R2, seulement `ALLOWED_ORIGINS` et un limiteur de débit : une faille ne donne accès à rien d'autre. Il ne contacte que `youtube.com/youtubei/v1/player` (URL fixe) et `*.googlevideo.com/videoplayback` (liste blanche, redirections revalidées, plage ≤ 16 Mo obligatoire, pas de téléchargement intégral). Les en-têtes sont filtrés. L'en-tête Origin est contournable hors navigateur : la limite de débit par IP et la plage bornée limitent l'abus de quota.
+
+**Conséquences.** Pour le déploiement, éviter de laisser le jeton OAuth de wrangler (portée très large) : `wrangler logout` après le déploiement, ou utiliser un jeton API dédié « Workers Scripts : Edit ».

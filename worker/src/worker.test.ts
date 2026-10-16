@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { handle } from './index'
+import { handle, MAX_RANGE, parseRange } from './index'
 import { isAllowedStreamUrl, parsePlayerResponse, parseVideoId, YouTubeError } from './youtube'
 
 const ORIGIN = 'https://user.github.io'
@@ -23,6 +23,7 @@ describe('parseVideoId', () => {
 
 describe('isAllowedStreamUrl', () => {
   it('accepte googlevideo en https', () => expect(isAllowedStreamUrl('https://rr1---sn-abc.googlevideo.com/videoplayback?x=1')).toBe(true))
+  it('rejette un autre chemin que /videoplayback', () => expect(isAllowedStreamUrl('https://rr1.googlevideo.com/other')).toBe(false))
   it.each([
     'http://rr1.googlevideo.com/x',
     'https://googlevideo.com.evil.com/x',
@@ -112,4 +113,36 @@ describe('handle', () => {
     expect(res.headers.get('set-cookie')).toBeNull()
     expect(await res.text()).toBe('abc')
   })
+
+  const media = `/stream?u=${encodeURIComponent('https://rr1.googlevideo.com/videoplayback?a=1')}`
+  it('/stream exige une plage bornée', async () => {
+    const f = ok('x')
+    expect((await handle(req(media), env, f)).status).toBe(416)
+    expect((await handle(req(media, { headers: { range: 'bytes=0-' } }), env, f)).status).toBe(416)
+    expect((await handle(req(media, { headers: { range: `bytes=0-${MAX_RANGE}` } }), env, f)).status).toBe(416)
+  })
+  it('/stream suit les redirections googlevideo mais pas les autres', async () => {
+    const seq = (loc: string) => {
+      let n = 0
+      return (async () => (n++ === 0 ? new Response(null, { status: 302, headers: { location: loc } }) : new Response('ok', { status: 206 }))) as typeof fetch
+    }
+    const range = { headers: { range: 'bytes=0-9' } }
+    expect((await handle(req(media, range), env, seq('https://rr2.googlevideo.com/videoplayback?b=2'))).status).toBe(206)
+    expect((await handle(req(media, range), env, seq('http://169.254.169.254/latest'))).status).toBe(502)
+    expect((await handle(req(media, range), env, seq('https://evil.example/videoplayback'))).status).toBe(502)
+  })
+  it('/stream n\'expose pas un type de contenu actif', async () => {
+    const f = (async () => new Response('<script>', { status: 206, headers: { 'content-type': 'text/html' } })) as typeof fetch
+    const res = await handle(req(media, { headers: { range: 'bytes=0-9' } }), env, f)
+    expect(res.headers.get('content-type')).toBe('application/octet-stream')
+    expect(res.headers.get('x-content-type-options')).toBe('nosniff')
+  })
+  it('applique la limite de débit', async () => {
+    const limited = { limit: async () => ({ success: false }) }
+    expect((await handle(req('/info?v=dQw4w9WgXcQ'), { ...env, LIMITER: limited }, ok(player))).status).toBe(429)
+  })
+})
+
+describe('parseRange', () => {
+  it.each([['bytes=0-9', 'bytes=0-9'], ['bytes=5-4', null], ['bytes=0-', null], ['bytes=-5', null], ['items=0-5', null], [null, null]])('%s', (i, o) => expect(parseRange(i)).toBe(o))
 })
