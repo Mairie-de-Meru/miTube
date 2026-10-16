@@ -15,3 +15,7 @@ GitHub Actions (subscriptions.yml, cron 6 h) : data/subscriptions.json (branche 
 - `src/lib/catalog.ts` ↔ `scripts/ytdl_opts.py` : mêmes options, à garder alignés.
 - `src/lib/jobs.ts` : fusion runs + artefacts + envois locaux → liste de jobs (sending/queued/running/done/failed/cancelled/expired).
 - Tests : vitest (`src/**/*.test.ts`), unittest (`tests/`).
+
+## Mode direct (Worker Cloudflare)
+
+`worker/src/index.ts` (routes `/info`, `/stream`, CORS par `ALLOWED_ORIGINS`) et `worker/src/youtube.ts` (client iOS, analyse de la réponse, liste blanche googlevideo). Contrat partagé dans `worker/src/types.ts`. Côté front : `src/lib/direct.ts` (choix des flux `planDownload`, téléchargement par tranches), `src/lib/mux.ts` (ffmpeg.wasm chargé à la demande depuis jsDelivr), `src/hooks/useDirect.ts` (file séquentielle), `src/components/DirectPanel.tsx`. Réglages : `workerUrl` (défaut `VITE_WORKER_URL`, variable de dépôt `WORKER_URL`) et `mode` (`direct` par défaut). Workflow facultatif `deploy-worker.yml`.

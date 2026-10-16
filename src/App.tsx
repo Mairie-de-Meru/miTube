@@ -7,6 +7,7 @@ import { loadSettings, loadToken, saveSettings, saveToken, type Settings, type S
 import { I18nContext, makeT } from './i18n'
 import { useJobs } from './hooks/useJobs'
 import { Navbar } from './components/Navbar'
+import { DirectPanel } from './components/DirectPanel'
 import { Welcome } from './components/Welcome'
 import { AddForm } from './components/AddForm'
 import { Subscriptions } from './components/Subscriptions'
@@ -156,7 +157,7 @@ export default function App() {
   const saveDialog = (s: Settings, tk: StoredToken) => {
     saveToken(tk)
     setStored(tk)
-    update({ repo: s.repo, defaults: s.defaults, presets: s.presets })
+    update({ workerUrl: s.workerUrl, repo: s.repo, defaults: s.defaults, presets: s.presets })
     setFormVersion((v) => v + 1)
     setDialog(null)
     toast('success', t('toast.saved'))
@@ -175,7 +176,16 @@ export default function App() {
         onSettings={openSettings}
       />
       <main className="container main">
-        {!client ? (
+        <div className="mode-switch" role="group">
+          {(['direct', 'actions'] as const).map((m) => (
+            <button key={m} type="button" className={`btn btn-sm${settings.mode === m ? ' btn-primary' : ''}`} aria-pressed={settings.mode === m} onClick={() => update({ mode: m })}>
+              {t(`mode.${m}` as 'mode.direct')}
+            </button>
+          ))}
+        </div>
+        {settings.mode === 'direct' ? (
+          <DirectPanel workerUrl={settings.workerUrl} onOpenSettings={openSettings} />
+        ) : !client ? (
           <Welcome onStart={openSettings} />
         ) : (
           <>

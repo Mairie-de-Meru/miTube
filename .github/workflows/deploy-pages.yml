@@ -31,6 +31,7 @@ jobs:
         # BASE_PATH vide => chemins relatifs, fonctionne sous /<repo>/ et sur un domaine perso.
         env:
           BASE_PATH: ${{ vars.BASE_PATH }}
+          VITE_WORKER_URL: ${{ vars.WORKER_URL }}
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

@@ -1,0 +1,10 @@
+# Worker MeTube Pages : relaie les requêtes du navigateur vers YouTube (le navigateur ne peut pas les
+# faire lui-même : CORS). Déploiement : `cd worker && npx wrangler deploy` (après `npx wrangler login`).
+name = "metube-pages-proxy"
+main = "src/index.ts"
+compatibility_date = "2026-10-01"
+workers_dev = true
+
+[vars]
+# Origine(s) du site autorisée(s), séparées par des virgules. Sans slash final.
+ALLOWED_ORIGINS = "https://appweb514-svg.github.io"

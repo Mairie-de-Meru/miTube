@@ -3,9 +3,40 @@
 Une version de [MeTube](https://github.com/alexta69/metube) qui s'installe sur **GitHub Pages**, sans serveur à toi.
 
 - L'**interface** (React) est un site statique hébergé gratuitement sur `https://<toi>.github.io/<dépôt>/`.
-- Le **téléchargement** est fait par **yt-dlp dans GitHub Actions** (les serveurs de GitHub), lancé depuis l'interface. Les fichiers te sont rendus sous forme d'artefacts que tu télécharges depuis la page.
+- Deux modes de téléchargement, au choix dans l'interface :
+  - **Direct (navigateur), sans jeton** : un petit **Worker Cloudflare** gratuit relaie YouTube, et la vidéo est téléchargée puis assemblée **dans ton navigateur**. Voir « Mode direct » ci-dessous.
+  - **GitHub Actions** : **yt-dlp** tourne sur les serveurs de GitHub (tous les sites, playlists, abonnements, sous-titres, MP3…). Il faut un jeton GitHub. Les fichiers te sont rendus sous forme d'artefacts.
 
-> ## À lire avant d'installer : ce que cette version ne peut pas faire
+## Mode direct (YouTube, sans jeton GitHub)
+
+Une page statique ne peut pas parler à YouTube directement (CORS, flux liés à l'IP). Le Worker (`worker/`) fait seulement le relais : il ne stocke rien, ne relaie que `youtube.com` (infos) et `*.googlevideo.com` (flux), et n'accepte que les requêtes venant de ton site (`ALLOWED_ORIGINS`).
+
+**Installation (5 minutes, compte Cloudflare gratuit) :**
+
+```bash
+cd worker
+npx wrangler login
+npx wrangler deploy
+```
+
+1. Si ton site n'est pas `https://appweb514-svg.github.io`, change `ALLOWED_ORIGINS` dans `worker/wrangler.toml` avant de déployer.
+2. Wrangler affiche l'adresse du Worker (`https://metube-pages-proxy.<toi>.workers.dev`). Colle-la dans **Réglages → Adresse du proxy** du site, ou, pour qu'elle soit préconfigurée pour tous les visiteurs, crée la variable de dépôt `WORKER_URL` (Settings → Secrets and variables → Actions → Variables) puis relance « Deploy to GitHub Pages ».
+3. Colle une URL YouTube, choisis Vidéo ou Audio et la qualité, clique **Télécharger**.
+
+*Facultatif : déploiement automatique du Worker.* Ajoute le secret `CLOUDFLARE_API_TOKEN` (modèle « Edit Cloudflare Workers »), le secret `CLOUDFLARE_ACCOUNT_ID` et la variable `DEPLOY_WORKER=true` : le workflow « Deploy Worker » redéploie à chaque changement de `worker/`.
+
+**Limites du mode direct, sans embellir :**
+
+| Limite | Détail |
+|---|---|
+| **YouTube peut refuser le Worker** | Les IP de Cloudflare sont des IP de datacenter : YouTube répond parfois « Sign in to confirm you're not a bot ». L'interface l'affiche clairement ; le mode GitHub Actions reste la solution de repli. Le test réel depuis Cloudflare reste à faire une fois le Worker déployé. |
+| **Technique non officielle** | Le Worker utilise l'API interne de YouTube (client iOS), comme yt-dlp. YouTube la change sans préavis : le Worker devra alors être mis à jour. |
+| **YouTube uniquement, une vidéo à la fois** | Pas de playlists, de sous-titres ni de MP3 dans ce mode (utiliser GitHub Actions). Sortie : MP4 (H.264 + AAC) ou M4A. |
+| **Mémoire du navigateur** | Le fichier est assemblé en mémoire (ffmpeg.wasm, sans ré-encodage). Une vidéo de plus de 1 à 2 Go peut échouer ; privilégie 1080p ou moins pour les longues vidéos. Le premier assemblage télécharge ffmpeg.wasm (~30 Mo, depuis jsDelivr). |
+| **Quota Cloudflare** | Offre gratuite : 100 000 requêtes par jour (chaque téléchargement en consomme quelques dizaines). |
+| **Conditions d'utilisation** | Respecte celles de YouTube et le droit d'auteur : usage personnel uniquement. |
+
+> ## Mode GitHub Actions : à lire avant de l'utiliser, ce qu'il ne peut pas faire
 >
 > yt-dlp ne peut pas tourner dans un navigateur (pas de Python, pas de ffmpeg, pas d'accès cross-origin aux sites). Une page 100 % statique ne peut donc pas télécharger de vidéos seule : il faut un moteur d'exécution quelque part. Ici, c'est GitHub Actions. Conséquences, sans embellir :
 >

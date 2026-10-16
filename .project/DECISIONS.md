@@ -23,3 +23,13 @@
 - Licence AGPL-3.0 (catalogue et mapping de formats dérivés de MeTube).
 
 **Conséquences.** Non vérifié de bout en bout sur GitHub (dépôt distant non créé) : à tester par l'utilisateur après fork. Voir README pour les limites.
+
+## 2026-10-15 — Mode direct sans jeton : proxy Cloudflare Worker
+
+**Contexte.** Le mode GitHub Actions oblige à créer et saisir un jeton GitHub. Gildas veut un téléchargement direct depuis le navigateur, sans jeton. Une page statique ne peut pas appeler YouTube (CORS) ni lire les flux googlevideo (pas d'en-têtes CORS, URL liées à l'IP).
+
+**Décision.** Un Worker Cloudflare gratuit (`worker/`) relaie deux choses seulement : `GET /info` (API interne YouTube, client iOS, URL directes sans signature) et `GET /stream` (uniquement `*.googlevideo.com`, avec Range). Accès limité aux origines de `ALLOWED_ORIGINS`. Le navigateur télécharge par tranches de 8 Mo (3 en parallèle) puis assemble image et son (MP4 H.264 + M4A) avec ffmpeg.wasm sans ré-encodage. Le mode Actions reste disponible pour les playlists, sous-titres, MP3 et abonnements.
+
+**Alternatives écartées.** Extension navigateur (plus un simple site), Cobalt (dépend d'un tiers), Invidious (écarté plus tôt : anti-bot sur le proxy média).
+
+**Conséquences.** Dépend d'un compte Cloudflare et d'une API YouTube non officielle (peut casser sans préavis). Risque principal non testé : YouTube peut refuser les IP de datacenter de Cloudflare (« confirm you're not a bot »), et les URL googlevideo liées à l'IP peuvent échouer si l'IP de sortie du Worker change entre `/info` et `/stream`. Le code reste valable dans les deux cas ; le repli est le mode Actions.
