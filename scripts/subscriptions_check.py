@@ -96,6 +96,10 @@ def main() -> int:
         with os.fdopen(fd, "w") as fh:
             fh.write(cookies)
 
+    proxy = ytdl_opts.proxy_from_env(os.environ.get("YTDLP_PROXY"))
+    if proxy:
+        base = {**base, "proxy": proxy}
+
     now = time.time()
     errors = 0
     try:

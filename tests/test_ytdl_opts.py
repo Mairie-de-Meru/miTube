@@ -163,3 +163,18 @@ class ExplainErrorTests(unittest.TestCase):
 
     def test_other_errors_unchanged(self):
         self.assertEqual(y.explain_error("Video unavailable"), "Video unavailable")
+
+
+class ProxyTests(unittest.TestCase):
+    def test_empty_means_no_proxy(self):
+        self.assertIsNone(y.proxy_from_env(None))
+        self.assertIsNone(y.proxy_from_env("  "))
+
+    def test_valid_schemes(self):
+        for u in ("socks5://u:p@host:1080", "http://10.0.0.1:3128", "socks5h://h:9"):
+            self.assertEqual(y.proxy_from_env(u), u)
+
+    def test_invalid_rejected(self):
+        for u in ("ftp://h:1", "host:1080", "socks5://", "javascript:alert(1)"):
+            with self.assertRaises(y.InvalidRequest):
+                y.proxy_from_env(u)

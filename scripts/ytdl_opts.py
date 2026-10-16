@@ -5,6 +5,8 @@ format, mêmes post-processeurs. Aucune dépendance en dehors de la bibliothèqu
 standard, pour pouvoir être testé sans yt-dlp.
 """
 
+from __future__ import annotations
+
 import copy
 import re
 from urllib.parse import urlsplit
@@ -260,9 +262,23 @@ def output_template(req: dict, is_playlist: bool) -> str:
     return "%(title)s.%(ext)s"
 
 
+PROXY_SCHEMES = ("http", "https", "socks4", "socks4a", "socks5", "socks5h")
+
+
+def proxy_from_env(value: str | None) -> str | None:
+    """Proxy de sortie yt-dlp (secret YTDLP_PROXY) : URL http(s)/socks valide, sinon None."""
+    value = (value or "").strip()
+    if not value:
+        return None
+    parts = urlsplit(value)
+    if parts.scheme not in PROXY_SCHEMES or not parts.hostname:
+        raise InvalidRequest("YTDLP_PROXY invalide : attendu schéma://[user:mdp@]hôte:port (http, https, socks5, socks5h…)")
+    return value
+
+
 BOT_CHECK_HINT = (
     "YouTube bloque les serveurs GitHub pour cette vidéo (« confirmez que vous n'êtes pas un robot »). "
-    "L'administrateur peut y remédier en ajoutant des cookies (secret YTDLP_COOKIES, voir le README)."
+    "L'administrateur peut y remédier en ajoutant des cookies (secret YTDLP_COOKIES) ou un proxy de sortie (secret YTDLP_PROXY), voir le README."
 )
 
 
