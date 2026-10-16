@@ -250,3 +250,16 @@ def output_template(req: dict, is_playlist: bool) -> str:
     if is_playlist:
         return "%(playlist_title|Playlist)s/%(playlist_index)s - %(title)s.%(ext)s"
     return "%(title)s.%(ext)s"
+
+
+BOT_CHECK_HINT = (
+    "YouTube bloque les serveurs GitHub pour cette vidéo (« confirmez que vous n'êtes pas un robot »). "
+    "L'administrateur peut y remédier en ajoutant des cookies (secret YTDLP_COOKIES, voir le README)."
+)
+
+
+def explain_error(message: str) -> str:
+    """Message d'erreur lisible pour l'interface (le détail technique reste dans le journal du run)."""
+    if "confirm you" in message and "not a bot" in message:
+        return BOT_CHECK_HINT
+    return message
