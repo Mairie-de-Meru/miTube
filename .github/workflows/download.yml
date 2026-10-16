@@ -59,6 +59,8 @@ jobs:
           YTDL_OPTIONS: ${{ vars.YTDL_OPTIONS }}
           YTDLP_COOKIES: ${{ secrets.YTDLP_COOKIES }}
           PUBLIC_MODE: ${{ vars.PUBLIC_MODE }}
+          INVIDIOUS_INSTANCES: ${{ vars.INVIDIOUS_INSTANCES }}
+          INVIDIOUS_FALLBACK: ${{ vars.INVIDIOUS_FALLBACK }}
           OUT_DIR: ${{ github.workspace }}/out
         run: python scripts/ytdl_run.py
 

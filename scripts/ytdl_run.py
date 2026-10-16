@@ -6,6 +6,8 @@ Entrées (variables d'environnement) :
   YTDLP_COOKIES    contenu cookies.txt Netscape (secret de dépôt, facultatif)
   OUT_DIR          dossier de sortie (défaut : out)
   PUBLIC_MODE      « 0 » pour lever les restrictions du mode public (défaut : actif)
+  INVIDIOUS_INSTANCES  instances Invidious du repli, séparées par espaces/virgules (défaut : liste intégrée)
+  INVIDIOUS_FALLBACK   « 0 » désactive le repli Invidious quand YouTube refuse yt-dlp (défaut : actif)
 
 Écrit les fichiers dans OUT_DIR et un résumé dans OUT_DIR/../metube-result/result.json.
 Sort avec un code non nul si tout a échoué.
@@ -19,7 +21,26 @@ import traceback
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
+import invidious  # noqa: E402
 import ytdl_opts  # noqa: E402
+
+
+def try_invidious(url: str, req: dict, out_dir: Path, public: bool, ytdlp_error: str) -> dict:
+    """Repli quand YouTube bloque yt-dlp (anti-bot) : flux obtenus via une instance Invidious."""
+    failed = {"url": url, "ok": False, "error": ytdl_opts.explain_error(ytdlp_error)[:500]}
+    vid = invidious.video_id_from_url(url)
+    if os.environ.get("INVIDIOUS_FALLBACK", "1").strip() == "0" or not vid or not ytdl_opts.is_bot_check(ytdlp_error):
+        return failed
+    if req["type"] not in ("video", "audio"):
+        return failed
+    try:
+        instances = invidious.instances_from_env(" ".join(req.get("invidiousInstances") or []))
+        info = invidious.run_fallback(vid, req, out_dir, instances, public)
+    except Exception as exc:  # noqa: BLE001
+        traceback.print_exc()
+        failed["error"] = f"{ytdl_opts.BOT_CHECK_HINT} Repli Invidious : {exc}"[:500]
+        return failed
+    return {"url": url, "title": info["title"], "isPlaylist": False, "entries": 1, "ok": True, "via": info["instance"]}
 
 
 def main() -> int:
@@ -88,9 +109,13 @@ def main() -> int:
                     }
                 )
             except Exception as exc:  # noqa: BLE001
-                failures += 1
                 traceback.print_exc()
-                result["items"].append({"url": url, "ok": False, "error": ytdl_opts.explain_error(str(exc))[:500]})
+                item = try_invidious(url, req, out_dir, public, str(exc))
+                if item["ok"]:
+                    result["items"].append(item)
+                    continue
+                failures += 1
+                result["items"].append(item)
     finally:
         if cookie_path:
             os.remove(cookie_path)

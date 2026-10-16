@@ -9,6 +9,8 @@ import copy
 import re
 from urllib.parse import urlsplit
 
+import invidious
+
 VIDEO_QUALITIES = ("best", "2160", "1440", "1080", "720", "480", "360", "240", "worst")
 VIDEO_FORMATS = ("any", "mp4", "ios")
 CODECS = ("auto", "h264", "h265", "av1", "vp9")
@@ -132,6 +134,7 @@ def normalize(payload: dict, public: bool = False) -> dict:
     if public:
         out["splitChapters"] = False
         out["noPlaylist"] = True
+        out["invidiousInstances"] = []
         return out
 
     limit = payload.get("playlistLimit", 0)
@@ -154,6 +157,11 @@ def normalize(payload: dict, public: bool = False) -> dict:
         raise InvalidRequest(f"options yt-dlp interdites : {', '.join(sorted(bad))}")
     out["ytdlOptions"] = extra
     out["noPlaylist"] = False
+    # Instances Invidious proposées par l'interface administrateur (jamais en mode public).
+    try:
+        out["invidiousInstances"] = invidious.parse_instances(" ".join(payload.get("invidiousInstances") or []))
+    except (invidious.InvidiousError, TypeError) as exc:
+        raise InvalidRequest(str(exc)) from exc
     return out
 
 
@@ -256,6 +264,10 @@ BOT_CHECK_HINT = (
     "YouTube bloque les serveurs GitHub pour cette vidéo (« confirmez que vous n'êtes pas un robot »). "
     "L'administrateur peut y remédier en ajoutant des cookies (secret YTDLP_COOKIES, voir le README)."
 )
+
+
+def is_bot_check(message: str) -> bool:
+    return "not a bot" in message or "LOGIN_REQUIRED" in message
 
 
 def explain_error(message: str) -> str:
