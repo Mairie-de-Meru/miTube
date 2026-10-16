@@ -96,3 +96,14 @@ describe('tokenUrl', () => {
   })
   it('sans propriétaire', () => expect(new URL(tokenUrl('')).searchParams.has('target_name')).toBe(false))
 })
+
+describe('buildJobs en mode public', () => {
+  it('ignore les runs lancés depuis un autre navigateur', () => {
+    const run = (id: string, n: number) =>
+      ({ id: n, display_title: `metube ${id}`, status: 'completed', conclusion: 'success', created_at: '2026-01-01T00:00:00Z', html_url: '' }) as never
+    const local = [{ jobId: 'abcd1111', createdAt: Date.now(), request: { urls: ['https://youtu.be/x'], type: 'video', format: 'mp4', quality: 'best', codec: 'auto' } }] as never
+    const jobs = buildJobs([run('abcd1111', 1), run('zzzz2222', 2)], [], local, {}, Date.now(), true)
+    expect(jobs.map((j) => j.id)).toEqual(['abcd1111'])
+    expect(buildJobs([run('abcd1111', 1), run('zzzz2222', 2)], [], local, {}, Date.now(), false)).toHaveLength(2)
+  })
+})

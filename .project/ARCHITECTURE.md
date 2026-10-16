@@ -16,6 +16,8 @@ GitHub Actions (subscriptions.yml, cron 6 h) : data/subscriptions.json (branche 
 - `src/lib/jobs.ts` : fusion runs + artefacts + envois locaux → liste de jobs (sending/queued/running/done/failed/cancelled/expired).
 - Tests : vitest (`src/**/*.test.ts`), unittest (`tests/`).
 
-## Mode direct (Worker Cloudflare)
+## Mode public (miTube)
 
-`worker/src/index.ts` (routes `/info`, `/stream`, CORS par `ALLOWED_ORIGINS`) et `worker/src/youtube.ts` (client iOS, analyse de la réponse, liste blanche googlevideo). Contrat partagé dans `worker/src/types.ts`. Côté front : `src/lib/direct.ts` (choix des flux `planDownload`, téléchargement par tranches), `src/lib/mux.ts` (ffmpeg.wasm chargé à la demande depuis jsDelivr), `src/hooks/useDirect.ts` (file séquentielle), `src/components/DirectPanel.tsx`. Réglages : `workerUrl` (défaut `VITE_WORKER_URL`, variable de dépôt `WORKER_URL`) et `mode` (`direct` par défaut). Workflow facultatif `deploy-worker.yml`.
+Build avec `VITE_PUBLIC_TOKEN` (secret `PUBLIC_TOKEN`, droits : Actions du seul dépôt) → `IS_PUBLIC` : jeton embarqué, dépôt déduit de l'URL github.io, `SimpleForm` (lien YouTube + format MP4/MP3/M4A), pas de réglages ni d'abonnements, liste limitée aux téléchargements lancés depuis ce navigateur (`buildJobs(..., onlyLocal)`). Sans jeton embarqué : mode administrateur (accueil + interface complète).
+
+Le jeton étant public, la validation décisive est côté Actions : `ytdl_opts.normalize(payload, public=True)` (variable `PUBLIC_MODE`, actif par défaut) n'accepte que des liens `https` YouTube (5 max), vidéo/audio, ignore `ytdlOptions`/`outputTemplate`/playlist/chapitres, et `get_opts` ajoute `noplaylist`, `max_filesize` 2 Go et un filtre de métadonnées (hors direct, ≤ 3 h).

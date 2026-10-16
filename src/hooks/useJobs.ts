@@ -9,7 +9,7 @@ const SLOW_MS = 30_000
 const ERROR_MS = 60_000
 const BOOST_MS = 60_000
 
-export function useJobs(client: GitHubClient | null) {
+export function useJobs(client: GitHubClient | null, onlyLocal = false) {
   const [runs, setRuns] = useState<WorkflowRun[]>([])
   const [artifacts, setArtifacts] = useState<Artifact[]>([])
   const [local, setLocal] = useState<LocalJob[]>(loadLocalJobs)
@@ -23,7 +23,7 @@ export function useJobs(client: GitHubClient | null) {
   const tried = useRef(new Set<string>())
   const queue = useRef<Promise<void>>(Promise.resolve())
 
-  const jobs = useMemo(() => buildJobs(runs, artifacts, local, metas), [runs, artifacts, local, metas])
+  const jobs = useMemo(() => buildJobs(runs, artifacts, local, metas, undefined, onlyLocal), [runs, artifacts, local, metas, onlyLocal])
   const hasActive = jobs.some(isActive)
   useEffect(() => {
     activeRef.current = hasActive

@@ -5,6 +5,7 @@ Entrées (variables d'environnement) :
   YTDL_OPTIONS     JSON d'options yt-dlp globales (variable de dépôt, facultatif)
   YTDLP_COOKIES    contenu cookies.txt Netscape (secret de dépôt, facultatif)
   OUT_DIR          dossier de sortie (défaut : out)
+  PUBLIC_MODE      « 0 » pour lever les restrictions du mode public (défaut : actif)
 
 Écrit les fichiers dans OUT_DIR et un résumé dans OUT_DIR/../metube-result/result.json.
 Sort avec un code non nul si tout a échoué.
@@ -33,7 +34,8 @@ def main() -> int:
         return code
 
     try:
-        req = ytdl_opts.normalize(json.loads(os.environ["PAYLOAD"]))
+        public = os.environ.get("PUBLIC_MODE", "1").strip() != "0"
+        req = ytdl_opts.normalize(json.loads(os.environ["PAYLOAD"]), public=public)
         result["jobId"] = req["jobId"]
         result["request"] = {k: req[k] for k in ("urls", "type", "format", "quality", "codec")}
         base = json.loads(os.environ.get("YTDL_OPTIONS") or "{}")
@@ -58,6 +60,8 @@ def main() -> int:
         for url in req["urls"]:
             opts = ytdl_opts.get_opts(req, base)
             opts.update(quiet=False, noprogress=True, ignoreerrors=False, windowsfilenames=True)
+            if isinstance(opts.get("match_filter"), str):
+                opts["match_filter"] = yt_dlp.utils.match_filter_func(opts["match_filter"])
             if cookie_path:
                 opts["cookiefile"] = cookie_path
             try:

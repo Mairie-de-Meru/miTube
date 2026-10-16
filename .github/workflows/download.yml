@@ -58,6 +58,7 @@ jobs:
           PAYLOAD: ${{ inputs.payload }}
           YTDL_OPTIONS: ${{ vars.YTDL_OPTIONS }}
           YTDLP_COOKIES: ${{ secrets.YTDLP_COOKIES }}
+          PUBLIC_MODE: ${{ vars.PUBLIC_MODE }}
           OUT_DIR: ${{ github.workspace }}/out
         run: python scripts/ytdl_run.py
 

@@ -190,10 +190,4 @@ legend { font-weight: 600; padding: 0 0.4rem; }
 }
 .tabs { display: flex; gap: 0.4rem; }
 
-/* Mode direct (Worker) */
-.direct-list { list-style: none; margin: 1rem 0 0; padding: 0; display: flex; flex-direction: column; gap: 0.6rem; }
-.direct-row { display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; }
-.direct-thumb { border-radius: 4px; object-fit: cover; background: var(--head); }
-.direct-main { flex: 1 1 14rem; min-width: 0; }
-.direct-main .title { overflow-wrap: anywhere; }
-.mode-switch { display: flex; gap: 0.4rem; margin-bottom: 1rem; }
+[hidden] { display: none !important; }

@@ -7,6 +7,7 @@ standard, pour pouvoir être testé sans yt-dlp.
 
 import copy
 import re
+from urllib.parse import urlsplit
 
 VIDEO_QUALITIES = ("best", "2160", "1440", "1080", "720", "480", "360", "240", "worst")
 VIDEO_FORMATS = ("any", "mp4", "ios")
@@ -47,8 +48,26 @@ def _choice(value, allowed, default, name):
     return value
 
 
-def normalize(payload: dict) -> dict:
-    """Valide le payload et complète les valeurs par défaut."""
+# Mode public : le jeton de l'interface est lisible par tous, donc le workflow
+# n'accepte que ce que l'interface simple peut produire.
+PUBLIC_HOSTS = {"youtube.com", "www.youtube.com", "m.youtube.com", "music.youtube.com", "youtu.be"}
+PUBLIC_MAX_URLS = 5
+PUBLIC_TYPES = ("video", "audio")
+# Pas de direct ni de vidéo de plus de 3 h (yt-dlp : filtre sur les métadonnées).
+PUBLIC_MATCH_FILTER = "!is_live & duration <=? 10800"
+PUBLIC_MAX_FILESIZE = 2 * 1024**3
+
+
+def is_public_url(url: str) -> bool:
+    parts = urlsplit(url)
+    return parts.scheme == "https" and (parts.hostname or "").lower() in PUBLIC_HOSTS and not parts.username
+
+
+def normalize(payload: dict, public: bool = False) -> dict:
+    """Valide le payload et complète les valeurs par défaut.
+
+    public=True : YouTube seulement, vidéo ou audio, une vidéo par adresse, options libres ignorées.
+    """
     if not isinstance(payload, dict) or payload.get("v") != 1:
         raise InvalidRequest("payload absent ou version inconnue")
     job_id = str(payload.get("jobId", ""))
@@ -64,7 +83,14 @@ def normalize(payload: dict) -> dict:
             raise InvalidRequest(f"adresse invalide : {u[:80]!r}")
         clean_urls.append(u)
 
-    dtype = _choice(payload.get("type"), TYPES, "video", "type")
+    if public:
+        if len(clean_urls) > PUBLIC_MAX_URLS:
+            raise InvalidRequest(f"au plus {PUBLIC_MAX_URLS} adresses par demande")
+        for u in clean_urls:
+            if not is_public_url(u):
+                raise InvalidRequest(f"seules les adresses YouTube (https) sont acceptées : {u[:80]!r}")
+
+    dtype = _choice(payload.get("type"), PUBLIC_TYPES if public else TYPES, "video", "type")
     out = {
         "jobId": job_id,
         "urls": clean_urls,
@@ -103,6 +129,11 @@ def normalize(payload: dict) -> dict:
     else:
         out["format"] = "jpg"
 
+    if public:
+        out["splitChapters"] = False
+        out["noPlaylist"] = True
+        return out
+
     limit = payload.get("playlistLimit", 0)
     if not isinstance(limit, int) or isinstance(limit, bool) or not 0 <= limit <= 10000:
         raise InvalidRequest("playlistLimit invalide")
@@ -122,6 +153,7 @@ def normalize(payload: dict) -> dict:
     if bad:
         raise InvalidRequest(f"options yt-dlp interdites : {', '.join(sorted(bad))}")
     out["ytdlOptions"] = extra
+    out["noPlaylist"] = False
     return out
 
 
@@ -154,6 +186,9 @@ def get_opts(req: dict, base: dict) -> dict:
     opts = copy.deepcopy(base)
     opts.update(req["ytdlOptions"])
     opts["format"] = get_format(req)
+    if req.get("noPlaylist"):
+        opts.update(noplaylist=True, max_filesize=PUBLIC_MAX_FILESIZE)
+        opts["match_filter"] = PUBLIC_MATCH_FILTER  # converti en fonction par ytdl_run (yt-dlp l'exige)
     dtype, fmt, quality = req["type"], req["format"], req["quality"]
     pps = []
 
