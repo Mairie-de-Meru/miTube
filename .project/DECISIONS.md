@@ -41,3 +41,11 @@
 **Décision.** Le Worker n'a ni secret, ni KV/D1/R2, seulement `ALLOWED_ORIGINS` et un limiteur de débit : une faille ne donne accès à rien d'autre. Il ne contacte que `youtube.com/youtubei/v1/player` (URL fixe) et `*.googlevideo.com/videoplayback` (liste blanche, redirections revalidées, plage ≤ 16 Mo obligatoire, pas de téléchargement intégral). Les en-têtes sont filtrés. L'en-tête Origin est contournable hors navigateur : la limite de débit par IP et la plage bornée limitent l'abus de quota.
 
 **Conséquences.** Pour le déploiement, éviter de laisser le jeton OAuth de wrangler (portée très large) : `wrangler logout` après le déploiement, ou utiliser un jeton API dédié « Workers Scripts : Edit ».
+
+## 2026-10-16 — Retour au mode GitHub Actions par défaut
+
+**Contexte.** Le Worker Cloudflare est déployé mais YouTube refuse toutes ses requêtes (8 clients testés, IP Cloudflare signalées).
+
+**Décision.** GitHub Actions redevient le mode par défaut. Le jeton ne peut pas être supprimé (aucun moyen de lancer un workflow depuis une page statique sans authentification, et le flux OAuth de GitHub n'est pas utilisable sans serveur) : on réduit l'effort à une saisie unique, avec lien de création prérempli et accueil en un écran. Le mode direct reste dans le code, masqué sans adresse de Worker.
+
+**Conséquences.** Le Worker déployé n'est plus utile pour YouTube ; il peut être supprimé du compte Cloudflare. Le transfert du dépôt vers Mairie-de-Meru change l'URL de Pages et l'origine autorisée du Worker.

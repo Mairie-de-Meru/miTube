@@ -10,7 +10,7 @@ export type Mode = 'direct' | 'actions'
 export const BUILD_WORKER_URL = normalizeWorkerUrl(import.meta.env?.VITE_WORKER_URL ?? '')
 
 export interface Settings {
-  /** direct : téléchargement dans le navigateur via le Worker ; actions : yt-dlp dans GitHub Actions. */
+  /** actions (défaut) : yt-dlp dans GitHub Actions ; direct : via le Worker, seulement si workerUrl est renseignée. */
   mode: Mode
   workerUrl: string
   repo: string
@@ -30,7 +30,7 @@ const { urls: _urls, ...DEFAULT_DEFAULTS } = DEFAULT_FORM
 void _urls
 
 export const DEFAULT_SETTINGS: Settings = {
-  mode: 'direct',
+  mode: 'actions',
   workerUrl: BUILD_WORKER_URL,
   repo: '',
   theme: 'auto',
@@ -68,6 +68,7 @@ export function loadSettings(): Settings {
     ...saved,
     lang: saved.lang ?? detectLang(),
     workerUrl: normalizeWorkerUrl(saved.workerUrl ?? '') || BUILD_WORKER_URL,
+    mode: saved.mode === 'direct' ? 'direct' : 'actions',
     defaults: { ...DEFAULT_SETTINGS.defaults, ...saved.defaults },
   }
 }

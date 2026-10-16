@@ -1,12 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
-import { GitHubClient, detectRepo, parseRepo } from '../lib/github'
+import { GitHubClient, detectRepo, parseRepo, tokenUrl } from '../lib/github'
 import { parsePresets, stringifyPresets, type FormValues } from '../lib/form'
 import { normalizeWorkerUrl } from '../lib/direct'
 import { clearAllLocalData, type Settings, type StoredToken } from '../lib/settings'
 import { useT } from '../i18n'
 import { OptionFields } from './OptionFields'
-
-const TOKEN_URL = 'https://github.com/settings/personal-access-tokens/new'
 
 export function SettingsDialog(p: {
   settings: Settings
@@ -113,7 +111,7 @@ export function SettingsDialog(p: {
             <summary>{t('set.howto')}</summary>
             <ol>
               <li>
-                <a href={TOKEN_URL} target="_blank" rel="noopener noreferrer">{t('set.howto.1')}</a>
+                <a href={tokenUrl(parseRepo(repo)?.owner ?? '')} target="_blank" rel="noopener noreferrer">{t('set.howto.1')}</a>
               </li>
               <li>{t('set.howto.2')}</li>
               <li>{t('set.howto.3')}</li>

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { GitHubClient, GitHubError, parseRepo } from './lib/github'
+import { GitHubClient, GitHubError, detectRepo, parseRepo } from './lib/github'
 import { buildPayload, type DownloadForm } from './lib/payload'
 import { normalizeForm } from './lib/form'
 import type { Job } from './lib/jobs'
@@ -176,6 +176,7 @@ export default function App() {
         onSettings={openSettings}
       />
       <main className="container main">
+        {settings.workerUrl && (
         <div className="mode-switch" role="group">
           {(['direct', 'actions'] as const).map((m) => (
             <button key={m} type="button" className={`btn btn-sm${settings.mode === m ? ' btn-primary' : ''}`} aria-pressed={settings.mode === m} onClick={() => update({ mode: m })}>
@@ -183,10 +184,21 @@ export default function App() {
             </button>
           ))}
         </div>
-        {settings.mode === 'direct' ? (
+        )}
+        {settings.workerUrl && settings.mode === 'direct' ? (
           <DirectPanel workerUrl={settings.workerUrl} onOpenSettings={openSettings} />
         ) : !client ? (
-          <Welcome onStart={openSettings} />
+          <Welcome
+            repo={settings.repo || detectRepo(location)}
+            token={stored}
+            onConnect={(repo, tk) => {
+              saveToken(tk)
+              setStored(tk)
+              update({ repo })
+              toast('success', t('toast.saved'))
+            }}
+            onAdvanced={openSettings}
+          />
         ) : (
           <>
             {error != null && (

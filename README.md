@@ -3,11 +3,13 @@
 Une version de [MeTube](https://github.com/alexta69/metube) qui s'installe sur **GitHub Pages**, sans serveur à toi.
 
 - L'**interface** (React) est un site statique hébergé gratuitement sur `https://<toi>.github.io/<dépôt>/`.
-- Deux modes de téléchargement, au choix dans l'interface :
-  - **Direct (navigateur), sans jeton** : un petit **Worker Cloudflare** gratuit relaie YouTube, et la vidéo est téléchargée puis assemblée **dans ton navigateur**. Voir « Mode direct » ci-dessous.
-  - **GitHub Actions** : **yt-dlp** tourne sur les serveurs de GitHub (tous les sites, playlists, abonnements, sous-titres, MP3…). Il faut un jeton GitHub. Les fichiers te sont rendus sous forme d'artefacts.
+- Le **téléchargement** est fait par **yt-dlp dans GitHub Actions** (les serveurs de GitHub), lancé depuis l'interface : YouTube et des centaines d'autres sites, playlists, abonnements, sous-titres, MP3… Les fichiers te sont rendus sous forme d'artefacts.
+- Il faut **un jeton GitHub, saisi une seule fois** : au premier lancement, l'interface ouvre un formulaire de jeton **prérempli** (nom, propriétaire, permission « Actions : Read and write », durée 1 an). Tu choisis le dépôt, tu copies le jeton, tu le colles : il reste dans ton navigateur et n'est plus redemandé. Une page statique ne peut pas lancer de tâche GitHub sans ce jeton.
+- Un mode **Direct (navigateur)** expérimental, sans jeton, existe via un Worker Cloudflare, mais **YouTube le refuse** (voir plus bas). Il est masqué tant qu'aucune adresse de Worker n'est renseignée.
 
-## Mode direct (YouTube, sans jeton GitHub)
+## Mode direct (expérimental, ne fonctionne pas pour YouTube en l'état)
+
+> **Test réel du 16/10/2026 :** déployé sur Cloudflare Workers, ce mode est refusé par YouTube (« Sign in to confirm you're not a bot »). Les huit clients de l'API YouTube testés depuis Cloudflare (iOS, Android, Android VR, TV, TV intégré, Web intégré, MWEB, Web Creator) sont bloqués : les IP de Cloudflare sont signalées. Le code fonctionne (testé depuis une IP résidentielle) mais pas depuis Cloudflare. Utilise le mode GitHub Actions pour YouTube. Cette section sert à un hébergeur dont l'IP serait acceptée.
 
 Une page statique ne peut pas parler à YouTube directement (CORS, flux liés à l'IP). Le Worker (`worker/`) fait seulement le relais : il ne stocke rien, ne relaie que `youtube.com` (infos) et `*.googlevideo.com` (flux), et n'accepte que les requêtes venant de ton site (`ALLOWED_ORIGINS`).
 

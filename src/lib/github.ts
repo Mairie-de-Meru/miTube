@@ -45,6 +45,18 @@ export function detectRepo(loc: Pick<Location, 'hostname' | 'pathname'>): string
   return `${m[1]}/${first ?? `${m[1]}.github.io`}`
 }
 
+/** Page de création d'un jeton à granularité fine, préremplie (nom, propriétaire, durée, permission Actions). */
+export function tokenUrl(owner: string): string {
+  const q = new URLSearchParams({
+    name: 'MeTube Pages',
+    description: 'Lance et lit les téléchargements MeTube Pages (GitHub Actions)',
+    expires_in: '365',
+    actions: 'write',
+  })
+  if (owner) q.set('target_name', owner)
+  return `https://github.com/settings/personal-access-tokens/new?${q}`
+}
+
 export interface WorkflowRun {
   id: number
   display_title: string

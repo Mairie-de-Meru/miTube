@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { buildPayload, DEFAULT_FORM, FormError, parseUrls } from './payload'
-import { detectRepo, parseRepo } from './github'
+import { detectRepo, parseRepo, tokenUrl } from './github'
 import { buildJobs, jobIdOfRun, statusOfRun, type LocalJob } from './jobs'
 import type { Artifact, WorkflowRun } from './github'
 import { formatBytes } from './format'
@@ -84,4 +84,15 @@ describe('format', () => {
     expect(formatBytes(1536)).toBe('1.5 KB')
     expect(formatBytes(5 * 1024 ** 3)).toBe('5.0 GB')
   })
+})
+
+describe('tokenUrl', () => {
+  it('préremplit nom, propriétaire et permission Actions', () => {
+    const u = new URL(tokenUrl('appweb514-svg'))
+    expect(u.origin + u.pathname).toBe('https://github.com/settings/personal-access-tokens/new')
+    expect(u.searchParams.get('target_name')).toBe('appweb514-svg')
+    expect(u.searchParams.get('actions')).toBe('write')
+    expect(u.searchParams.get('contents')).toBeNull()
+  })
+  it('sans propriétaire', () => expect(new URL(tokenUrl('')).searchParams.has('target_name')).toBe(false))
 })
