@@ -20,3 +20,4 @@
 - 2026-10-16 | Worker supprimé | `wrangler delete metube-pages-proxy` : https://metube-pages-proxy.metube.workers.dev répond 404. Déconnexion wrangler recommandée (`npx wrangler@4 logout`).
 - 2026-10-16 | dépôt créé | https://github.com/Mairie-de-Meru/miTube (public), main poussée ; remote `old` = ancien dépôt. Pages activé (source Actions).
 - 2026-10-16 | branche feat/mitube-public | Mode public : jeton embarqué (secret PUBLIC_TOKEN), interface simple (lien + format/MP3), durcissement Python (YouTube seul, 5 liens, vidéo/audio, pas d'options libres, 3 h / 2 Go), liste limitée aux téléchargements du navigateur, code du mode direct supprimé, README réécrit. Tests : 33 vitest, 27 unittest ; lint, build OK.
+- 2026-10-16 | PR #1 fusionnée (squash), miTube | https://github.com/Mairie-de-Meru/miTube/pull/1 ; branche supprimée. Reste : créer le jeton, secret PUBLIC_TOKEN, lancer Deploy to GitHub Pages.
